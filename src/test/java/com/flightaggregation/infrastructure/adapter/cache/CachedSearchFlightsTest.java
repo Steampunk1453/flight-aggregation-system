@@ -3,24 +3,17 @@ package com.flightaggregation.infrastructure.adapter.cache;
 import com.flightaggregation.application.port.in.SearchFlights;
 import com.flightaggregation.application.usecase.FlightSearchCriteria;
 import com.flightaggregation.application.usecase.FlightSearchResult;
-import com.flightaggregation.infrastructure.adapter.observability.FlightSearchCompletedEvent;
 import org.junit.jupiter.api.Test;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
 import java.time.Duration;
 import java.time.LocalDate;
-import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class CachedSearchFlightsTest {
@@ -34,14 +27,12 @@ class CachedSearchFlightsTest {
         FlightSearchResult cachedResult = new FlightSearchResult(java.util.List.of(), java.util.List.of());
         var cache = cacheReturning(cachedResult, cachedResult);
         var delegate = new CountingSearchFlights();
-        ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
-        var searchFlights = new CachedSearchFlights(delegate, cache, eventPublisher);
+        var searchFlights = new CachedSearchFlights(delegate, cache);
 
         FlightSearchResult result = searchFlights.search(CRITERIA);
 
         assertSame(cachedResult, result);
         assertEquals(0, delegate.calls);
-        verify(eventPublisher).publishEvent(any(FlightSearchCompletedEvent.class));
     }
 
     @Test
@@ -49,8 +40,7 @@ class CachedSearchFlightsTest {
         FlightSearchResult liveResult = new FlightSearchResult(java.util.List.of(), java.util.List.of());
         var cache = cacheReturning(null, liveResult);
         var delegate = new CountingSearchFlights(liveResult);
-        ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
-        var searchFlights = new CachedSearchFlights(delegate, cache, eventPublisher);
+        var searchFlights = new CachedSearchFlights(delegate, cache);
 
         FlightSearchResult firstResult = searchFlights.search(CRITERIA);
         FlightSearchResult secondResult = searchFlights.search(CRITERIA);
@@ -58,8 +48,6 @@ class CachedSearchFlightsTest {
         assertSame(liveResult, firstResult);
         assertSame(liveResult, secondResult);
         assertEquals(1, delegate.calls);
-        verify(eventPublisher, org.mockito.Mockito.times(2))
-                .publishEvent(any(FlightSearchCompletedEvent.class));
     }
 
     private static final class CountingSearchFlights implements SearchFlights {

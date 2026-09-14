@@ -1,0 +1,15 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/flights"
+  },
+  "response": {
+    "status": 200,
+    "fixedDelayMilliseconds": 100,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "[{\"carrier\":\"OA\",\"carrierName\":\"Omega Air\",\"flightNumber\":\"OA101\",\"origin\":\"{{request.query.origin}}\",\"destination\":\"{{request.query.destination}}\",\"departure\":\"{{request.query.departureDate}}T10:00:00Z\",\"arrival\":\"{{request.query.departureDate}}T12:00:00Z\",\"price\":120.00,\"currency\":\"EUR\"},{\"carrier\":\"AB\",\"carrierName\":\"Atlas Blue\",\"flightNumber\":\"AB201\",\"origin\":\"{{request.query.origin}}\",\"destination\":\"{{request.query.destination}}\",\"departure\":\"{{request.query.departureDate}}T12:30:00Z\",\"arrival\":\"{{request.query.departureDate}}T15:15:00Z\",\"price\":190.00,\"currency\":\"EUR\"}]",
+    "transformers": ["response-template"]
+  }
+}

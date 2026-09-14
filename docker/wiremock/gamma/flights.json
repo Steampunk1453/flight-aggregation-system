@@ -1,0 +1,15 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/flights"
+  },
+  "response": {
+    "status": 200,
+    "fixedDelayMilliseconds": 1000,
+    "headers": {
+      "Content-Type": "text/plain"
+    },
+    "body": "OA,Omega Air,OA101,{{request.query.origin}},{{request.query.destination}},{{request.query.departureDate}}T10:00:00Z,{{request.query.departureDate}}T12:00:00Z,118.00,EUR\nEF,Echo Fly,EF404,{{request.query.origin}},{{request.query.destination}},{{request.query.departureDate}}T16:00:00Z,{{request.query.departureDate}}T19:30:00Z,142.50,EUR",
+    "transformers": ["response-template"]
+  }
+}

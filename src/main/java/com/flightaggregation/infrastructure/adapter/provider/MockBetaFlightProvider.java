@@ -1,12 +1,12 @@
 package com.flightaggregation.infrastructure.adapter.provider;
 
 import com.flightaggregation.application.usecase.FlightSearchCriteria;
+import com.flightaggregation.application.port.out.FlightSearchProvider;
 import com.flightaggregation.domain.model.Carrier;
 import com.flightaggregation.domain.model.FlightItinerary;
 import com.flightaggregation.domain.model.FlightSegment;
 import com.flightaggregation.domain.model.Money;
 import com.flightaggregation.domain.model.ProviderId;
-import com.flightaggregation.domain.repository.FlightProviderRepository;
 import org.w3c.dom.Element;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -14,32 +14,29 @@ import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.time.Duration;
+import java.net.URI;
+import java.net.http.HttpClient;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class MockBetaFlightProvider implements FlightProviderRepository {
+public final class MockBetaFlightProvider implements FlightSearchProvider {
 
-    private final SimulatedProviderConfig config;
+    private final URI endpoint;
+    private final ProviderHttpClient httpClient;
 
-    public MockBetaFlightProvider() {
-        this(new SimulatedProviderConfig(Duration.ofMillis(500), false));
-    }
-
-    public MockBetaFlightProvider(SimulatedProviderConfig config) {
-        this.config = config;
+    public MockBetaFlightProvider(URI endpoint, HttpClient httpClient) {
+        this.endpoint = endpoint;
+        this.httpClient = new ProviderHttpClient(httpClient);
     }
 
     @Override
     public ProviderId provider() {
-        return ProviderId.MOCK_BETA;
+        return ProviderId.BETA;
     }
 
     @Override
     public List<FlightItinerary> search(FlightSearchCriteria criteria) {
-        simulateRequest();
-        return parse(rawResponse(criteria));
+        return parse(httpClient.search(endpoint, criteria, "Mock-Beta"));
     }
 
     private List<FlightItinerary> parse(String response) {
@@ -70,29 +67,4 @@ public final class MockBetaFlightProvider implements FlightProviderRepository {
         return ((Element) parent.getElementsByTagName(tag).item(0)).getTextContent();
     }
 
-    private String rawResponse(FlightSearchCriteria criteria) {
-        String departure = criteria.departureDate().atTime(10, 0).atOffset(ZoneOffset.UTC).toString();
-        String arrival = criteria.departureDate().atTime(12, 0).atOffset(ZoneOffset.UTC).toString();
-        return "<response><data><flights><flight><carrierCode>OA</carrierCode>"
-                + "<carrierName>Omega Air</carrierName><flightNumber>OA101</flightNumber><origin>"
-                + criteria.origin() + "</origin><destination>" + criteria.destination() + "</destination><departure>"
-                + departure + "</departure><arrival>" + arrival + "</arrival><price>115.00</price>"
-                + "<currency>EUR</currency></flight></flights></data></response>";
-    }
-
-    private void simulateRequest() {
-        sleep();
-        if (config.failRequests()) {
-            throw new ProviderRequestException("Mock-Beta request failed with status 500");
-        }
-    }
-
-    private void sleep() {
-        try {
-            Thread.sleep(config.latency());
-        } catch (InterruptedException exception) {
-            Thread.currentThread().interrupt();
-            throw new ProviderRequestException("Mock-Beta request was interrupted");
-        }
-    }
 }

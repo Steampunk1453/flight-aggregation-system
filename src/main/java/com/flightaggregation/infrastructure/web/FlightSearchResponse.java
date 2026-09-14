@@ -1,6 +1,6 @@
 package com.flightaggregation.infrastructure.web;
 
-import com.flightaggregation.application.usecase.FlightSearchResult;
+import com.flightaggregation.application.usecase.FlightSearchPage;
 import com.flightaggregation.domain.model.FlightSegment;
 import com.flightaggregation.domain.model.Money;
 
@@ -10,7 +10,8 @@ import java.util.List;
 
 public record FlightSearchResponse(
         List<FlightSearchResultDto> flights,
-        List<ProviderFailureDto> providerFailures
+        List<ProviderFailureDto> providerFailures,
+        String nextCursor
 ) {
 
     public FlightSearchResponse {
@@ -18,9 +19,9 @@ public record FlightSearchResponse(
         providerFailures = List.copyOf(providerFailures);
     }
 
-    static FlightSearchResponse from(FlightSearchResult result) {
+    static FlightSearchResponse from(FlightSearchPage page) {
         return new FlightSearchResponse(
-                result.itineraries().stream()
+                page.flights().stream()
                         .map(flight -> new FlightSearchResultDto(
                                 flight.itinerary().provider(),
                                 flight.itinerary().segments().stream()
@@ -30,12 +31,13 @@ public record FlightSearchResponse(
                                 MoneyDto.from(flight.sellingPrice())
                         ))
                         .toList(),
-                result.failures().stream()
+                page.providerFailures().stream()
                         .map(failure -> new ProviderFailureDto(
                                 failure.provider().name(),
                                 failure.reason()
                         ))
-                        .toList()
+                        .toList(),
+                FlightSearchCursorCodec.encode(page.nextCursor())
         );
     }
 

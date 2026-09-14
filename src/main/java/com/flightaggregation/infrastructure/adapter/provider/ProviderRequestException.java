@@ -1,6 +1,6 @@
 package com.flightaggregation.infrastructure.adapter.provider;
 
-import com.flightaggregation.domain.repository.ProviderFailureException;
+import com.flightaggregation.application.port.out.ProviderFailureException;
 
 public final class ProviderRequestException extends ProviderFailureException {
 

@@ -1,0 +1,15 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/flights"
+  },
+  "response": {
+    "status": 200,
+    "fixedDelayMilliseconds": 500,
+    "headers": {
+      "Content-Type": "application/xml"
+    },
+    "body": "<response><data><flights><flight><carrierCode>OA</carrierCode><carrierName>Omega Air</carrierName><flightNumber>OA101</flightNumber><origin>{{request.query.origin}}</origin><destination>{{request.query.destination}}</destination><departure>{{request.query.departureDate}}T10:00:00Z</departure><arrival>{{request.query.departureDate}}T12:00:00Z</arrival><price>115.00</price><currency>EUR</currency></flight><flight><carrierCode>CD</carrierCode><carrierName>Continental Direct</carrierName><flightNumber>CD301</flightNumber><origin>{{request.query.origin}}</origin><destination>{{request.query.destination}}</destination><departure>{{request.query.departureDate}}T14:00:00Z</departure><arrival>{{request.query.departureDate}}T17:00:00Z</arrival><price>130.00</price><currency>EUR</currency></flight></flights></data></response>",
+    "transformers": ["response-template"]
+  }
+}
