@@ -43,6 +43,11 @@
                     <input id="carrier" name="carrier" type="text" minlength="2" maxlength="3"
                            placeholder="OA" autocomplete="off">
                 </label>
+                <label>
+                    Page size
+                    <input id="page-size" name="pageSize" type="number" min="1" max="100"
+                           placeholder="20" title="Lower this to force multiple pages, e.g. 1 or 2">
+                </label>
                 <button type="submit">Search flights</button>
             </div>
         </form>

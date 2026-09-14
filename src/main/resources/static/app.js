@@ -4,6 +4,7 @@ const destinationInput = document.querySelector("#destination");
 const departureDateInput = document.querySelector("#departure-date");
 const maxPriceInput = document.querySelector("#max-price");
 const carrierInput = document.querySelector("#carrier");
+const pageSizeInput = document.querySelector("#page-size");
 const status = document.querySelector("#search-status");
 const resultsSection = document.querySelector("#results-section");
 const resultCount = document.querySelector("#result-count");
@@ -61,6 +62,10 @@ async function search(cursor) {
         }
         if (carrier) {
             params.set("carrier", carrier);
+        }
+        const pageSize = pageSizeInput.value.trim();
+        if (pageSize) {
+            params.set("pageSize", pageSize);
         }
         if (cursor) {
             params.set("cursor", cursor);
