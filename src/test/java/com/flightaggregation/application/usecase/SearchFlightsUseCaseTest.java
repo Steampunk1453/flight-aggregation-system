@@ -1,9 +1,11 @@
 package com.flightaggregation.application.usecase;
 
-import com.flightaggregation.infrastructure.adapter.provider.MockAlphaFlightProvider;
-import com.flightaggregation.infrastructure.adapter.provider.MockBetaFlightProvider;
-import com.flightaggregation.infrastructure.adapter.provider.MockGammaFlightProvider;
-import com.flightaggregation.infrastructure.adapter.provider.SimulatedProviderConfig;
+import com.flightaggregation.application.port.out.FlightSearchProvider;
+import com.flightaggregation.domain.model.Carrier;
+import com.flightaggregation.domain.model.FlightItinerary;
+import com.flightaggregation.domain.model.FlightSegment;
+import com.flightaggregation.domain.model.Money;
+import com.flightaggregation.domain.model.ProviderId;
 import com.flightaggregation.domain.policy.FixedMarkupPolicy;
 import com.flightaggregation.domain.policy.MarkupRate;
 import org.junit.jupiter.api.Test;
@@ -11,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -29,9 +32,9 @@ class SearchFlightsUseCaseTest {
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
             var useCase = new SearchFlightsUseCase(
                     List.of(
-                            new MockAlphaFlightProvider(fastConfig()),
-                            new MockBetaFlightProvider(fastConfig()),
-                            new MockGammaFlightProvider(fastConfig())
+                            provider(ProviderId.ALPHA, "120.00", Duration.ZERO, false),
+                            provider(ProviderId.BETA, "115.00", Duration.ZERO, false),
+                            provider(ProviderId.GAMMA, "118.00", Duration.ZERO, false)
                     ),
                     Duration.ofSeconds(1),
                     executor,
@@ -55,8 +58,8 @@ class SearchFlightsUseCaseTest {
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
             var useCase = new SearchFlightsUseCase(
                     List.of(
-                            new MockAlphaFlightProvider(fastConfig()),
-                            new MockBetaFlightProvider(new SimulatedProviderConfig(Duration.ZERO, true))
+                            provider(ProviderId.ALPHA, "120.00", Duration.ZERO, false),
+                            provider(ProviderId.BETA, "115.00", Duration.ZERO, true)
                     ),
                     Duration.ofSeconds(1),
                     executor,
@@ -76,9 +79,8 @@ class SearchFlightsUseCaseTest {
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
             var useCase = new SearchFlightsUseCase(
                     List.of(
-                            new MockAlphaFlightProvider(fastConfig()),
-                            new MockGammaFlightProvider(
-                                    new SimulatedProviderConfig(Duration.ofMillis(200), false))
+                            provider(ProviderId.ALPHA, "120.00", Duration.ZERO, false),
+                            provider(ProviderId.GAMMA, "118.00", Duration.ofMillis(200), false)
                     ),
                     Duration.ofMillis(25),
                     executor,
@@ -93,7 +95,42 @@ class SearchFlightsUseCaseTest {
         }
     }
 
-    private static SimulatedProviderConfig fastConfig() {
-        return new SimulatedProviderConfig(Duration.ZERO, false);
+    private static FlightSearchProvider provider(
+            ProviderId providerId,
+            String price,
+            Duration latency,
+            boolean shouldFail
+    ) {
+        return new FlightSearchProvider() {
+            @Override
+            public ProviderId provider() {
+                return providerId;
+            }
+
+            @Override
+            public List<FlightItinerary> search(FlightSearchCriteria criteria) {
+                try {
+                    Thread.sleep(latency);
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(exception);
+                }
+                if (shouldFail) {
+                    throw new IllegalStateException("Provider unavailable");
+                }
+                return List.of(new FlightItinerary(
+                        List.of(new FlightSegment(
+                                new Carrier("OA", "Omega Air"),
+                                "OA101",
+                                criteria.origin(),
+                                criteria.destination(),
+                                OffsetDateTime.parse(criteria.departureDate() + "T10:00:00Z"),
+                                OffsetDateTime.parse(criteria.departureDate() + "T12:00:00Z")
+                        )),
+                        new Money(new BigDecimal(price), "EUR"),
+                        providerId.name()
+                ));
+            }
+        };
     }
 }
