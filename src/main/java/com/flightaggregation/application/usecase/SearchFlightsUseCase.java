@@ -5,6 +5,8 @@ import com.flightaggregation.application.port.in.SearchFlights;
 import com.flightaggregation.application.port.out.FlightSearchProvider;
 import com.flightaggregation.application.port.out.ProviderFailureException;
 import com.flightaggregation.domain.policy.MarkupPolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.time.Duration;
@@ -19,6 +21,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public final class SearchFlightsUseCase implements SearchFlights {
+
+    private static final Logger log = LoggerFactory.getLogger(SearchFlightsUseCase.class);
 
     private final List<FlightSearchProvider> providers;
     private final Duration providerTimeout;
@@ -50,6 +54,10 @@ public final class SearchFlightsUseCase implements SearchFlights {
     @Override
     public FlightSearchResult search(FlightSearchCriteria criteria) {
         Objects.requireNonNull(criteria, "Search criteria must not be null");
+        log.debug(
+                "Querying {} providers for {}->{} on {}",
+                providers.size(), criteria.origin(), criteria.destination(), criteria.departureDate()
+        );
         List<CompletableFuture<ProviderResult>> requests = providers.stream()
                 .map(provider -> request(provider, criteria))
                 .toList();
@@ -80,6 +88,16 @@ public final class SearchFlightsUseCase implements SearchFlights {
                     .map(ProviderResult::failure)
                     .filter(Objects::nonNull)
                     .toList();
+        if (!failures.isEmpty()) {
+            log.warn(
+                    "Partial provider failures for {}->{}: {}",
+                    criteria.origin(), criteria.destination(), failures
+            );
+        }
+        log.debug(
+                "Search for {}->{} produced {} deduplicated itineraries",
+                criteria.origin(), criteria.destination(), itineraries.size()
+        );
         return new FlightSearchResult(itineraries, failures);
     }
 
@@ -106,11 +124,14 @@ public final class SearchFlightsUseCase implements SearchFlights {
                 ? error.getCause()
                 : error;
         if (cause instanceof TimeoutException) {
+            log.debug("Provider timed out", cause);
             return "Provider response timed out after the configured limit";
         }
         if (cause instanceof ProviderFailureException) {
+            log.debug("Provider request failed: {}", cause.getMessage());
             return cause.getMessage();
         }
+        log.debug("Provider request failed unexpectedly", cause);
         return "Provider request failed: " + cause.getClass().getSimpleName();
     }
 

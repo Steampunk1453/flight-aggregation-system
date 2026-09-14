@@ -3,10 +3,14 @@ package com.flightaggregation.application.usecase;
 import com.flightaggregation.application.port.in.SearchFlightPage;
 import com.flightaggregation.application.port.in.SearchFlights;
 import com.flightaggregation.application.port.out.FlightSearchResultStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
 public final class SearchFlightPageUseCase implements SearchFlightPage {
+
+    private static final Logger log = LoggerFactory.getLogger(SearchFlightPageUseCase.class);
 
     private final SearchFlights searchFlights;
     private final FlightSearchResultStore resultStore;
@@ -24,6 +28,10 @@ public final class SearchFlightPageUseCase implements SearchFlightPage {
         Objects.requireNonNull(criteria, "Search criteria must not be null");
         Objects.requireNonNull(pageRequest, "Page request must not be null");
         FlightSearchResult result = searchFlights.search(criteria);
+        log.debug(
+                "Materializing {} itineraries for {}->{}",
+                result.itineraries().size(), criteria.origin(), criteria.destination()
+        );
         resultStore.upsertAll(result.itineraries());
         FlightSearchPage page = resultStore.findPage(criteria, pageRequest);
         return new FlightSearchPage(page.flights(), page.nextCursor(), result.failures());
