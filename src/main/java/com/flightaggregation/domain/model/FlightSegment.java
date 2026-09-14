@@ -2,6 +2,7 @@ package com.flightaggregation.domain.model;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.io.Serializable;
 import java.util.Objects;
 
 public record FlightSegment(
@@ -11,7 +12,7 @@ public record FlightSegment(
         String destination,
         OffsetDateTime departureAt,
         OffsetDateTime arrivalAt
-) {
+) implements Serializable {
 
     public FlightSegment {
         Objects.requireNonNull(carrier, "Carrier must not be null");

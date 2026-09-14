@@ -2,9 +2,10 @@ package com.flightaggregation.domain.model;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.io.Serializable;
 import java.util.Objects;
 
-public record Money(BigDecimal amount, String currency) {
+public record Money(BigDecimal amount, String currency) implements Serializable {
 
     public Money {
         Objects.requireNonNull(amount, "Amount must not be null");
@@ -21,5 +22,13 @@ public record Money(BigDecimal amount, String currency) {
     public Money multiply(BigDecimal multiplier) {
         Objects.requireNonNull(multiplier, "Multiplier must not be null");
         return new Money(amount.multiply(multiplier), currency);
+    }
+
+    public boolean isLessThan(Money other) {
+        Objects.requireNonNull(other, "Other money value must not be null");
+        if (!currency.equals(other.currency)) {
+            throw new IllegalArgumentException("Money values must use the same currency");
+        }
+        return amount.compareTo(other.amount) < 0;
     }
 }

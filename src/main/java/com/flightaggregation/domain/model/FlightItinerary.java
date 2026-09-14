@@ -1,8 +1,8 @@
 package com.flightaggregation.domain.model;
 
-import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -11,7 +11,7 @@ public record FlightItinerary(
         List<FlightSegment> segments,
         Money supplierPrice,
         String provider
-) {
+) implements Serializable {
 
     public FlightItinerary {
         Objects.requireNonNull(segments, "Segments must not be null");
@@ -37,10 +37,6 @@ public record FlightItinerary(
 
     public OffsetDateTime departureAt() {
         return segments.getFirst().departureAt();
-    }
-
-    public Money priceWithMarkup() {
-        return supplierPrice.multiply(new BigDecimal("1.05"));
     }
 
     public String deduplicationKey() {

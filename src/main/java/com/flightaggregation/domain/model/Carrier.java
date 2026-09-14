@@ -1,6 +1,8 @@
 package com.flightaggregation.domain.model;
 
-public record Carrier(String code, String name) {
+import java.io.Serializable;
+
+public record Carrier(String code, String name) implements Serializable {
 
     public Carrier {
         if (code == null || code.isBlank()) {
