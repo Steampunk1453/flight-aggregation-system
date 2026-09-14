@@ -1,0 +1,21 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "GET",
+    "urlPath": "/flights",
+    "queryParameters": {
+      "origin": {
+        "equalTo": "SLO"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "fixedDelayMilliseconds": 5000,
+    "headers": {
+      "Content-Type": "text/plain"
+    },
+    "body": "OA,Omega Air,OA101,{{request.query.origin}},{{request.query.destination}},{{request.query.departureDate}}T10:00:00Z,{{request.query.departureDate}}T12:00:00Z,118.00,EUR",
+    "transformers": ["response-template"]
+  }
+}
