@@ -1,6 +1,5 @@
 package com.flightaggregation.domain.model;
 
-import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.io.Serializable;
 import java.util.Objects;
@@ -32,10 +31,6 @@ public record FlightSegment(
         origin = origin.trim().toUpperCase();
         destination = destination.trim().toUpperCase();
         flightNumber = flightNumber.trim().toUpperCase();
-    }
-
-    public Duration duration() {
-        return Duration.between(departureAt, arrivalAt);
     }
 
     private static void requireCode(String value, String field) {

@@ -21,7 +21,7 @@ public final class MockAlphaFlightProvider implements FlightSearchProvider {
     private static final Pattern FLIGHT_PATTERN = Pattern.compile(
             "\\{\"carrier\":\"([^\"]+)\",\"carrierName\":\"([^\"]+)\",\"flightNumber\":\"([^\"]+)\","
                     + "\"origin\":\"([^\"]+)\",\"destination\":\"([^\"]+)\",\"departure\":\"([^\"]+)\","
-                    + "\"arrival\":\"([^\"]+)\",\"price\":([0-9.]+),\"currency\":\"([^\"]+)\"\\}");
+                    + "\"arrival\":\"([^\"]+)\",\"price\":([0-9.]+),\"currency\":\"([^\"]+)\"}");
 
     private final URI endpoint;
     private final ProviderHttpClient httpClient;

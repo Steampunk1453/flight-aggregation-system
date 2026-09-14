@@ -13,10 +13,6 @@ public record FlightSearchPageRequest(int pageSize, FlightSearchCursor cursor) {
         }
     }
 
-    public FlightSearchPageRequest() {
-        this(DEFAULT_PAGE_SIZE, null);
-    }
-
     public record FlightSearchCursor(
             java.time.OffsetDateTime departureAt,
             java.math.BigDecimal sellingPrice,
