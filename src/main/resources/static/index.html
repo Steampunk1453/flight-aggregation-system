@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Flight Finder</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/app.js" defer></script>
+</head>
+<body>
+<main class="container">
+    <header class="page-header">
+        <p class="eyebrow">Flight Aggregation System</p>
+        <h1>Find your next flight</h1>
+        <p class="subtitle">Compare live offers from multiple providers in one search.</p>
+    </header>
+
+    <section class="search-panel" aria-labelledby="search-title">
+        <h2 id="search-title">Search flights</h2>
+        <form id="search-form" novalidate>
+            <div class="form-grid">
+                <label>
+                    Origin
+                    <input id="origin" name="origin" type="text" minlength="3" maxlength="3"
+                           placeholder="MAD" autocomplete="off" required>
+                </label>
+                <label>
+                    Destination
+                    <input id="destination" name="destination" type="text" minlength="3" maxlength="3"
+                           placeholder="JFK" autocomplete="off" required>
+                </label>
+                <label>
+                    Departure date
+                    <input id="departure-date" name="departureDate" type="date" required>
+                </label>
+                <button type="submit">Search flights</button>
+            </div>
+        </form>
+        <p id="search-status" class="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section id="results-section" class="results" aria-labelledby="results-title" hidden>
+        <div class="section-heading">
+            <h2 id="results-title">Available flights</h2>
+            <span id="result-count"></span>
+        </div>
+        <div id="provider-failures" aria-live="polite"></div>
+        <div id="flight-results" class="flight-list"></div>
+    </section>
+</main>
+</body>
+</html>
