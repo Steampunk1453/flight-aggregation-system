@@ -68,7 +68,7 @@ h2 {
 
 .form-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) auto;
     gap: 1rem;
     align-items: end;
 }
@@ -188,6 +188,11 @@ button:disabled {
     padding: 0.75rem 1rem;
     color: #6c4300;
     background: #fff8e6;
+}
+
+.next-page {
+    display: block;
+    margin: 1.5rem auto 0;
 }
 
 @media (max-width: 720px) {

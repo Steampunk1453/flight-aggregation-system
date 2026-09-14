@@ -33,6 +33,16 @@
                     Departure date
                     <input id="departure-date" name="departureDate" type="date" required>
                 </label>
+                <label>
+                    Maximum price
+                    <input id="max-price" name="maxPrice" type="number" min="0" step="0.01"
+                           placeholder="250.00">
+                </label>
+                <label>
+                    Carrier
+                    <input id="carrier" name="carrier" type="text" minlength="2" maxlength="3"
+                           placeholder="OA" autocomplete="off">
+                </label>
                 <button type="submit">Search flights</button>
             </div>
         </form>
@@ -46,6 +56,7 @@
         </div>
         <div id="provider-failures" aria-live="polite"></div>
         <div id="flight-results" class="flight-list"></div>
+        <button id="next-page" class="next-page" type="button" hidden>Next page</button>
     </section>
 </main>
 </body>

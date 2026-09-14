@@ -2,51 +2,89 @@ const form = document.querySelector("#search-form");
 const originInput = document.querySelector("#origin");
 const destinationInput = document.querySelector("#destination");
 const departureDateInput = document.querySelector("#departure-date");
+const maxPriceInput = document.querySelector("#max-price");
+const carrierInput = document.querySelector("#carrier");
 const status = document.querySelector("#search-status");
 const resultsSection = document.querySelector("#results-section");
 const resultCount = document.querySelector("#result-count");
 const flightResults = document.querySelector("#flight-results");
 const providerFailures = document.querySelector("#provider-failures");
 const submitButton = form.querySelector("button");
+const nextPageButton = document.querySelector("#next-page");
+let nextCursor = null;
 
 departureDateInput.value = new Date().toISOString().slice(0, 10);
 
 form.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const origin = originInput.value.trim().toUpperCase();
-    const destination = destinationInput.value.trim().toUpperCase();
-    const departureDate = departureDateInput.value;
-
-    if (!isAirportCode(origin) || !isAirportCode(destination)) {
+    if (!isAirportCode(originInput.value.trim().toUpperCase())
+        || !isAirportCode(destinationInput.value.trim().toUpperCase())) {
         showError("Origin and destination must be three-letter airport codes.");
         return;
     }
-    if (!departureDate) {
+    if (!departureDateInput.value) {
         showError("Select a departure date.");
         return;
     }
+    if (carrierInput.value.trim() && !isCarrierCode(carrierInput.value.trim().toUpperCase())) {
+        showError("Carrier must be a two- or three-letter code.");
+        return;
+    }
+    if (maxPriceInput.value && Number(maxPriceInput.value) < 0) {
+        showError("Maximum price must not be negative.");
+        return;
+    }
 
-    setLoading(true);
     clearResults();
+    await search(null);
+});
+
+nextPageButton.addEventListener("click", async () => {
+    if (nextCursor) {
+        await search(nextCursor);
+    }
+});
+
+async function search(cursor) {
+    setLoading(true);
     try {
-        const params = new URLSearchParams({origin, destination, departureDate});
+        const params = new URLSearchParams({
+            origin: originInput.value.trim().toUpperCase(),
+            destination: destinationInput.value.trim().toUpperCase(),
+            departureDate: departureDateInput.value
+        });
+        const maxPrice = maxPriceInput.value.trim();
+        const carrier = carrierInput.value.trim().toUpperCase();
+        if (maxPrice) {
+            params.set("maxPrice", maxPrice);
+        }
+        if (carrier) {
+            params.set("carrier", carrier);
+        }
+        if (cursor) {
+            params.set("cursor", cursor);
+        }
         const response = await fetch(`/api/flights/search?${params}`);
         const body = await response.json();
         if (!response.ok) {
             throw new Error(body.message || "The flight search could not be completed.");
         }
-        renderResults(body);
+        renderResults(body, cursor !== null);
         status.textContent = "";
     } catch (error) {
         showError(error instanceof Error ? error.message : "The flight search could not be completed.");
     } finally {
         setLoading(false);
     }
-});
+}
 
 function isAirportCode(value) {
     return /^[A-Z]{3}$/.test(value);
+}
+
+function isCarrierCode(value) {
+    return /^[A-Z]{2,3}$/.test(value);
 }
 
 function setLoading(isLoading) {
@@ -62,6 +100,8 @@ function clearResults() {
     resultsSection.hidden = true;
     flightResults.replaceChildren();
     providerFailures.replaceChildren();
+    nextCursor = null;
+    nextPageButton.hidden = true;
 }
 
 function showError(message) {
@@ -69,11 +109,16 @@ function showError(message) {
     status.textContent = message;
 }
 
-function renderResults(result) {
+function renderResults(result, append) {
     resultsSection.hidden = false;
-    resultCount.textContent = `${result.flights.length} result${result.flights.length === 1 ? "" : "s"}`;
+    if (!append) {
+        flightResults.replaceChildren();
+        providerFailures.replaceChildren();
+    }
+    const displayedCount = flightResults.childElementCount + result.flights.length;
+    resultCount.textContent = `${displayedCount} result${displayedCount === 1 ? "" : "s"}`;
 
-    if (result.flights.length === 0) {
+    if (result.flights.length === 0 && !append) {
         const emptyState = document.createElement("p");
         emptyState.className = "empty-state";
         emptyState.textContent = "No flights were found for this route.";
@@ -82,7 +127,7 @@ function renderResults(result) {
         result.flights.forEach((flight) => flightResults.append(createFlightCard(flight)));
     }
 
-    if (result.providerFailures.length > 0) {
+    if (!append && result.providerFailures.length > 0) {
         const warning = document.createElement("p");
         warning.className = "provider-warning";
         warning.textContent = `Partial results: ${result.providerFailures
@@ -90,6 +135,9 @@ function renderResults(result) {
             .join(", ")}.`;
         providerFailures.append(warning);
     }
+
+    nextCursor = result.nextCursor;
+    nextPageButton.hidden = !nextCursor;
 }
 
 function createFlightCard(flight) {
