@@ -1,12 +1,13 @@
 package com.flightaggregation.infrastructure.web;
 
-import com.flightaggregation.application.port.in.SearchFlightPage;
-import com.flightaggregation.application.usecase.FlightSearchPage;
-import com.flightaggregation.application.usecase.SearchFlight;
+import com.flightaggregation.application.port.in.SearchPagedFlights;
+import com.flightaggregation.application.dto.FlightSearchPage;
+import com.flightaggregation.application.dto.FlightOffer;
 import com.flightaggregation.domain.model.Carrier;
 import com.flightaggregation.domain.model.FlightItinerary;
 import com.flightaggregation.domain.model.FlightSegment;
 import com.flightaggregation.domain.model.Money;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -34,12 +35,13 @@ class FlightSearchControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private SearchFlightPage searchFlightPage;
+    private SearchPagedFlights searchPagedFlights;
 
     @Test
+    @DisplayName("The search endpoint responds with the deduplicated flight including supplier and selling prices")
     void returnsTheDeduplicatedFlightWithSupplierAndSellingPrices() throws Exception {
-        when(searchFlightPage.search(any(), any())).thenReturn(new FlightSearchPage(
-                List.of(new SearchFlight(
+        when(searchPagedFlights.search(any(), any())).thenReturn(new FlightSearchPage(
+                List.of(new FlightOffer(
                         new FlightItinerary(
                                 List.of(new FlightSegment(
                                         new Carrier("OA", "Omega Air"),
@@ -72,6 +74,7 @@ class FlightSearchControllerTest {
     }
 
     @Test
+    @DisplayName("The search endpoint responds with a 400 error when origin and destination are the same")
     void rejectsAnInvalidSearchRequest() throws Exception {
         mockMvc.perform(get("/api/flights/search")
                         .queryParam("origin", "MAD")
@@ -85,8 +88,8 @@ class FlightSearchControllerTest {
     static class WebTestConfiguration {
 
         @Bean
-        SearchFlightPage searchFlightPage() {
-            return mock(SearchFlightPage.class);
+        SearchPagedFlights searchPagedFlights() {
+            return mock(SearchPagedFlights.class);
         }
     }
 }

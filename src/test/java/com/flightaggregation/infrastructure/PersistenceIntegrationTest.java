@@ -1,14 +1,15 @@
 package com.flightaggregation.infrastructure;
 
 import com.flightaggregation.application.port.out.FlightSearchResultStore;
-import com.flightaggregation.application.usecase.FlightSearchCriteria;
-import com.flightaggregation.application.usecase.FlightSearchPageRequest;
-import com.flightaggregation.application.usecase.SearchFlight;
+import com.flightaggregation.application.dto.FlightSearchCriteria;
+import com.flightaggregation.application.dto.FlightSearchPageRequest;
+import com.flightaggregation.application.dto.FlightOffer;
 import com.flightaggregation.domain.model.Carrier;
 import com.flightaggregation.domain.model.FlightItinerary;
 import com.flightaggregation.domain.model.FlightSegment;
 import com.flightaggregation.domain.model.Money;
 import com.flightaggregation.infrastructure.adapter.cache.RedisFlightSearchCache;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -59,6 +60,7 @@ class PersistenceIntegrationTest {
     }
 
     @Test
+    @DisplayName("Stores search results in Redis and Postgres and retrieves them correctly using cursor-based pagination")
     void storesSearchResultsAndReadsThemWithKeysetPagination() {
         FlightSearchCriteria criteria = new FlightSearchCriteria(
                 "MAD",
@@ -67,10 +69,10 @@ class PersistenceIntegrationTest {
                 new BigDecimal("250.00"),
                 "OA"
         );
-        SearchFlight firstFlight = flight("OA101", "2026-10-01T10:00:00Z", "120.00");
-        SearchFlight secondFlight = flight("OA102", "2026-10-01T11:00:00Z", "125.00");
+        FlightOffer firstFlight = flight("OA101", "2026-10-01T10:00:00Z", "120.00");
+        FlightOffer secondFlight = flight("OA102", "2026-10-01T11:00:00Z", "125.00");
 
-        cache.put(criteria, new com.flightaggregation.application.usecase.FlightSearchResult(
+        cache.put(criteria, new com.flightaggregation.application.dto.FlightSearchResult(
                 List.of(firstFlight),
                 List.of()
         ));
@@ -98,8 +100,8 @@ class PersistenceIntegrationTest {
         assertTrue(secondPage.nextCursor() == null);
     }
 
-    private static SearchFlight flight(String flightNumber, String departureAt, String price) {
-        return new SearchFlight(
+    private static FlightOffer flight(String flightNumber, String departureAt, String price) {
+        return new FlightOffer(
                 new FlightItinerary(
                         List.of(new FlightSegment(
                                 new Carrier("OA", "Omega Air"),

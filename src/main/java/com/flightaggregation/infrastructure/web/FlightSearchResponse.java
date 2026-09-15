@@ -1,6 +1,6 @@
 package com.flightaggregation.infrastructure.web;
 
-import com.flightaggregation.application.usecase.FlightSearchPage;
+import com.flightaggregation.application.dto.FlightSearchPage;
 import com.flightaggregation.domain.model.FlightSegment;
 import com.flightaggregation.domain.model.Money;
 

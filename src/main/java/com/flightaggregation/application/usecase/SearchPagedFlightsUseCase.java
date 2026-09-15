@@ -1,6 +1,10 @@
 package com.flightaggregation.application.usecase;
 
-import com.flightaggregation.application.port.in.SearchFlightPage;
+import com.flightaggregation.application.dto.FlightSearchCriteria;
+import com.flightaggregation.application.dto.FlightSearchPage;
+import com.flightaggregation.application.dto.FlightSearchPageRequest;
+import com.flightaggregation.application.dto.FlightSearchResult;
+import com.flightaggregation.application.port.in.SearchPagedFlights;
 import com.flightaggregation.application.port.in.SearchFlights;
 import com.flightaggregation.application.port.out.FlightSearchResultStore;
 import org.slf4j.Logger;
@@ -8,14 +12,14 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
-public final class SearchFlightPageUseCase implements SearchFlightPage {
+public final class SearchPagedFlightsUseCase implements SearchPagedFlights {
 
-    private static final Logger log = LoggerFactory.getLogger(SearchFlightPageUseCase.class);
+    private static final Logger log = LoggerFactory.getLogger(SearchPagedFlightsUseCase.class);
 
     private final SearchFlights searchFlights;
     private final FlightSearchResultStore resultStore;
 
-    public SearchFlightPageUseCase(
+    public SearchPagedFlightsUseCase(
             SearchFlights searchFlights,
             FlightSearchResultStore resultStore
     ) {

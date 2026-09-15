@@ -1,5 +1,9 @@
 package com.flightaggregation.application.usecase;
 
+import com.flightaggregation.application.dto.FlightOffer;
+import com.flightaggregation.application.dto.FlightSearchCriteria;
+import com.flightaggregation.application.dto.FlightSearchResult;
+import com.flightaggregation.application.dto.ProviderSearchFailure;
 import com.flightaggregation.domain.model.FlightItinerary;
 import com.flightaggregation.application.port.in.SearchFlights;
 import com.flightaggregation.application.port.out.FlightSearchProvider;
@@ -66,7 +70,7 @@ public final class SearchFlightsUseCase implements SearchFlights {
                 .map(CompletableFuture::join)
                 .toList();
 
-        List<SearchFlight> itineraries = results.stream()
+        List<FlightOffer> itineraries = results.stream()
                     .flatMap(result -> result.itineraries().stream())
                     .collect(Collectors.collectingAndThen(
                             Collectors.toMap(
@@ -76,7 +80,7 @@ public final class SearchFlightsUseCase implements SearchFlights {
                             ),
                             values -> values.values().stream()
                                     .sorted(java.util.Comparator.comparing(FlightItinerary::departureAt))
-                                    .map(itinerary -> new SearchFlight(
+                                    .map(itinerary -> new FlightOffer(
                                             itinerary,
                                             markupPolicy.sellingPriceFor(itinerary)
                                     ))
@@ -139,7 +143,7 @@ public final class SearchFlightsUseCase implements SearchFlights {
         return second.supplierPrice().isLessThan(first.supplierPrice()) ? second : first;
     }
 
-    private static boolean matches(FlightSearchCriteria criteria, SearchFlight flight) {
+    private static boolean matches(FlightSearchCriteria criteria, FlightOffer flight) {
         boolean isWithinMaximumPrice = criteria.maxPrice() == null
                 || flight.sellingPrice().amount().compareTo(criteria.maxPrice()) <= 0;
         boolean matchesCarrier = criteria.carrier() == null

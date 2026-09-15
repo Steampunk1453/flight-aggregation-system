@@ -1,11 +1,11 @@
-package com.flightaggregation.application.usecase;
+package com.flightaggregation.application.dto;
 
 import java.util.List;
 import java.io.Serializable;
 import java.util.Objects;
 
 public record FlightSearchResult(
-        List<SearchFlight> itineraries,
+        List<FlightOffer> itineraries,
         List<ProviderSearchFailure> failures
 ) implements Serializable {
 

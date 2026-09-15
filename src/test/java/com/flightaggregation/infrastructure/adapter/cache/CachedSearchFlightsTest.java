@@ -1,8 +1,9 @@
 package com.flightaggregation.infrastructure.adapter.cache;
 
 import com.flightaggregation.application.port.in.SearchFlights;
-import com.flightaggregation.application.usecase.FlightSearchCriteria;
-import com.flightaggregation.application.usecase.FlightSearchResult;
+import com.flightaggregation.application.dto.FlightSearchCriteria;
+import com.flightaggregation.application.dto.FlightSearchResult;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -23,6 +24,7 @@ class CachedSearchFlightsTest {
     private static final Duration CACHE_TTL = Duration.ofMinutes(5);
 
     @Test
+    @DisplayName("When there is a cached result, returns it directly without invoking the delegated search")
     void returnsACachedResultWithoutCallingTheProviderSearch() {
         FlightSearchResult cachedResult = new FlightSearchResult(java.util.List.of(), java.util.List.of());
         var cache = cacheReturning(cachedResult, cachedResult);
@@ -36,6 +38,7 @@ class CachedSearchFlightsTest {
     }
 
     @Test
+    @DisplayName("When there is no cached result, invokes the delegated search once and caches the result for the next call")
     void cachesTheResultReturnedByTheProviderSearchOnAMiss() {
         FlightSearchResult liveResult = new FlightSearchResult(java.util.List.of(), java.util.List.of());
         var cache = cacheReturning(null, liveResult);

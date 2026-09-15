@@ -8,6 +8,7 @@ flight:
       url: ${FLIGHT_PROVIDER_BETA_URL:http://localhost:8082/flights}
     gamma:
       url: ${FLIGHT_PROVIDER_GAMMA_URL:http://localhost:8083/flights}
+    timeout: ${FLIGHT_PROVIDERS_TIMEOUT:PT3S}
   search:
     cache:
       enabled: true

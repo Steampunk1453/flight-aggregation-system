@@ -1,6 +1,6 @@
 package com.flightaggregation.infrastructure.adapter.persistence.jpa;
 
-import com.flightaggregation.application.usecase.SearchFlight;
+import com.flightaggregation.application.dto.FlightOffer;
 import com.flightaggregation.domain.model.FlightItinerary;
 import com.flightaggregation.domain.model.Money;
 import jakarta.persistence.CollectionTable;
@@ -25,10 +25,16 @@ import java.util.UUID;
 @Table(
         name = "materialized_flights",
         uniqueConstraints = @UniqueConstraint(name = "uk_materialized_flight_key", columnNames = "deduplicationKey"),
-        indexes = @Index(
-                name = "idx_materialized_flights_search_keyset",
-                columnList = "origin, destination, departureAt, carrierCode, sellingAmount, id"
-        )
+        indexes = {
+                @Index(
+                        name = "idx_materialized_flights_keyset",
+                        columnList = "origin, destination, departureAt, sellingAmount, id"
+                ),
+                @Index(
+                        name = "idx_materialized_flights_carrier_keyset",
+                        columnList = "origin, destination, carrierCode, departureAt, sellingAmount, id"
+                )
+        }
 )
 public class MaterializedFlightEntity {
 
@@ -74,7 +80,7 @@ public class MaterializedFlightEntity {
     protected MaterializedFlightEntity() {
     }
 
-    private MaterializedFlightEntity(SearchFlight flight) {
+    private MaterializedFlightEntity(FlightOffer flight) {
         FlightItinerary itinerary = flight.itinerary();
         deduplicationKey = itinerary.deduplicationKey();
         id = UUID.nameUUIDFromBytes(deduplicationKey.getBytes(StandardCharsets.UTF_8)).toString();
@@ -90,7 +96,7 @@ public class MaterializedFlightEntity {
         segments = itinerary.segments().stream().map(MaterializedFlightSegment::from).toList();
     }
 
-    static MaterializedFlightEntity from(SearchFlight flight) {
+    static MaterializedFlightEntity from(FlightOffer flight) {
         return new MaterializedFlightEntity(flight);
     }
 
@@ -106,8 +112,8 @@ public class MaterializedFlightEntity {
         return sellingAmount;
     }
 
-    SearchFlight toDomain() {
-        return new SearchFlight(
+    FlightOffer toDomain() {
+        return new FlightOffer(
                 new FlightItinerary(
                         segments.stream().map(MaterializedFlightSegment::toDomain).toList(),
                         new Money(supplierAmount, supplierCurrency),

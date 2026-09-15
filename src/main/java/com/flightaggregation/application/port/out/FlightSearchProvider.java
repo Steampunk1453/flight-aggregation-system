@@ -1,14 +1,14 @@
 package com.flightaggregation.application.port.out;
 
-import com.flightaggregation.application.usecase.FlightSearchCriteria;
+import com.flightaggregation.application.dto.FlightSearchCriteria;
 import com.flightaggregation.domain.model.FlightItinerary;
-import com.flightaggregation.domain.model.ProviderId;
+import com.flightaggregation.domain.model.Provider;
 
 import java.util.List;
 
 public interface FlightSearchProvider {
 
-    ProviderId provider();
+    Provider provider();
 
     List<FlightItinerary> search(FlightSearchCriteria criteria);
 }

@@ -1,6 +1,5 @@
 package com.flightaggregation.domain.model;
 
-import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.io.Serializable;
 import java.util.List;
@@ -48,10 +47,6 @@ public record FlightItinerary(
                         segment.destination(),
                         segment.departureAt().toInstant().toString()))
                 .collect(Collectors.joining(">>"));
-    }
-
-    public Duration totalTravelTime() {
-        return Duration.between(departureAt(), segments.getLast().arrivalAt());
     }
 
     private static void validateConnections(List<FlightSegment> segments) {

@@ -1,7 +1,7 @@
 package com.flightaggregation.infrastructure.adapter.cache;
 
-import com.flightaggregation.application.usecase.FlightSearchCriteria;
-import com.flightaggregation.application.usecase.FlightSearchResult;
+import com.flightaggregation.application.dto.FlightSearchCriteria;
+import com.flightaggregation.application.dto.FlightSearchResult;
 import org.springframework.data.redis.core.RedisTemplate;
 
 import java.time.Duration;

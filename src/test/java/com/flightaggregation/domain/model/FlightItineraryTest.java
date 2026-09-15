@@ -2,6 +2,7 @@ package com.flightaggregation.domain.model;
 
 import com.flightaggregation.domain.policy.FixedMarkupPolicy;
 import com.flightaggregation.domain.policy.MarkupRate;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -16,6 +17,7 @@ class FlightItineraryTest {
     private static final Carrier CARRIER = new Carrier("ab", "Mock Air");
 
     @Test
+    @DisplayName("Applies the configured markup policy to the supplier price to obtain the selling price")
     void appliesTheConfiguredMarkupPolicy() {
         FlightItinerary itinerary = new FlightItinerary(
                 List.of(segment("MAD", "LHR", "2026-10-01T10:00:00+02:00", "2026-10-01T11:30:00+01:00")),
@@ -29,6 +31,7 @@ class FlightItineraryTest {
     }
 
     @Test
+    @DisplayName("Generates a stable deduplication key from the itinerary's identity")
     void createsStableDeduplicationKeyFromItineraryIdentity() {
         FlightItinerary itinerary = new FlightItinerary(
                 List.of(segment("MAD", "LHR", "2026-10-01T10:00:00+02:00", "2026-10-01T11:30:00+01:00")),
@@ -43,6 +46,7 @@ class FlightItineraryTest {
     }
 
     @Test
+    @DisplayName("Rejects creating an itinerary when the connections between segments are not valid")
     void rejectsInvalidConnections() {
         FlightSegment first = segment("MAD", "LHR", "2026-10-01T10:00:00+02:00", "2026-10-01T11:30:00+01:00");
         FlightSegment second = segment("CDG", "JFK", "2026-10-01T13:00:00+02:00", "2026-10-01T16:00:00-04:00");

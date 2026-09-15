@@ -1,10 +1,11 @@
 package com.flightaggregation.infrastructure.adapter.provider;
 
-import com.flightaggregation.application.usecase.FlightSearchCriteria;
+import com.flightaggregation.application.dto.FlightSearchCriteria;
 import com.flightaggregation.application.usecase.SearchFlightsUseCase;
 import com.flightaggregation.domain.policy.FixedMarkupPolicy;
 import com.flightaggregation.domain.policy.MarkupRate;
 import com.sun.net.httpserver.HttpServer;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -34,8 +35,11 @@ class ProviderResiliencyTest {
             new FlightSearchCriteria("MAD", "JFK", LocalDate.of(2026, 10, 1));
 
     @Test
+    @DisplayName("Returns partial results when one provider responds with a 500 error and another exceeds the timeout")
     void returnsPartialResultsWhenOneProviderFailsAndAnotherExceedsTheTimeout() throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+        ExecutorService serverExecutor = Executors.newVirtualThreadPerTaskExecutor();
+        server.setExecutor(serverExecutor);
         try {
             server.start();
             // Alpha: controlled 500, mirroring the "occasional 500 errors" requirement.
@@ -89,6 +93,7 @@ class ProviderResiliencyTest {
             }
         } finally {
             server.stop(0);
+            serverExecutor.close();
         }
     }
 

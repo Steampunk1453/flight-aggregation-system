@@ -1,10 +1,10 @@
-package com.flightaggregation.application.usecase;
+package com.flightaggregation.application.dto;
 
 import java.util.List;
 import java.util.Objects;
 
 public record FlightSearchPage(
-        List<SearchFlight> flights,
+        List<FlightOffer> flights,
         FlightSearchPageRequest.FlightSearchCursor nextCursor,
         List<ProviderSearchFailure> providerFailures
 ) {

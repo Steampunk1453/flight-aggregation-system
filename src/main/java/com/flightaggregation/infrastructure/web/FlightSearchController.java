@@ -1,8 +1,8 @@
 package com.flightaggregation.infrastructure.web;
 
-import com.flightaggregation.application.port.in.SearchFlightPage;
-import com.flightaggregation.application.usecase.FlightSearchCriteria;
-import com.flightaggregation.application.usecase.FlightSearchPageRequest;
+import com.flightaggregation.application.port.in.SearchPagedFlights;
+import com.flightaggregation.application.dto.FlightSearchCriteria;
+import com.flightaggregation.application.dto.FlightSearchPageRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,10 +24,10 @@ public class FlightSearchController {
 
     private static final Logger log = LoggerFactory.getLogger(FlightSearchController.class);
 
-    private final SearchFlightPage searchFlightPage;
+    private final SearchPagedFlights searchPagedFlights;
 
-    public FlightSearchController(SearchFlightPage searchFlightPage) {
-        this.searchFlightPage = searchFlightPage;
+    public FlightSearchController(SearchPagedFlights searchPagedFlights) {
+        this.searchPagedFlights = searchPagedFlights;
     }
 
     @Operation(
@@ -61,7 +61,7 @@ public class FlightSearchController {
                 pageSize == null ? FlightSearchPageRequest.DEFAULT_PAGE_SIZE : pageSize,
                 FlightSearchCursorCodec.decode(cursor)
         );
-        var page = searchFlightPage.search(criteria, pageRequest);
+        var page = searchPagedFlights.search(criteria, pageRequest);
         log.info(
                 "Search completed origin={} destination={} flights={} failedProviders={} hasNextPage={}",
                 origin, destination, page.flights().size(), page.providerFailures().size(),
@@ -70,4 +70,3 @@ public class FlightSearchController {
         return FlightSearchResponse.from(page);
     }
 }
-

@@ -1,27 +1,30 @@
 package com.flightaggregation.infrastructure.adapter.provider;
 
-import com.flightaggregation.application.usecase.FlightSearchCriteria;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flightaggregation.application.dto.FlightSearchCriteria;
 import com.flightaggregation.application.port.out.FlightSearchProvider;
 import com.flightaggregation.domain.model.Carrier;
 import com.flightaggregation.domain.model.FlightItinerary;
 import com.flightaggregation.domain.model.FlightSegment;
 import com.flightaggregation.domain.model.Money;
-import com.flightaggregation.domain.model.ProviderId;
+import com.flightaggregation.domain.model.Provider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
+import java.time.DateTimeException;
 import java.time.OffsetDateTime;
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public final class MockAlphaFlightProvider implements FlightSearchProvider {
 
-    private static final Pattern FLIGHT_PATTERN = Pattern.compile(
-            "\\{\"carrier\":\"([^\"]+)\",\"carrierName\":\"([^\"]+)\",\"flightNumber\":\"([^\"]+)\","
-                    + "\"origin\":\"([^\"]+)\",\"destination\":\"([^\"]+)\",\"departure\":\"([^\"]+)\","
-                    + "\"arrival\":\"([^\"]+)\",\"price\":([0-9.]+),\"currency\":\"([^\"]+)\"}");
+    private static final Logger log = LoggerFactory.getLogger(MockAlphaFlightProvider.class);
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private final URI endpoint;
     private final ProviderHttpClient httpClient;
@@ -32,8 +35,8 @@ public final class MockAlphaFlightProvider implements FlightSearchProvider {
     }
 
     @Override
-    public ProviderId provider() {
-        return ProviderId.ALPHA;
+    public Provider provider() {
+        return Provider.ALPHA;
     }
 
     @Override
@@ -42,18 +45,67 @@ public final class MockAlphaFlightProvider implements FlightSearchProvider {
     }
 
     private List<FlightItinerary> parse(String response) {
-        Matcher matcher = FLIGHT_PATTERN.matcher(response);
-        List<FlightItinerary> itineraries = new java.util.ArrayList<>();
-        while (matcher.find()) {
-            itineraries.add(new FlightItinerary(
-                    List.of(new FlightSegment(
-                            new Carrier(matcher.group(1), matcher.group(2)),
-                            matcher.group(3), matcher.group(4), matcher.group(5),
-                            OffsetDateTime.parse(matcher.group(6)), OffsetDateTime.parse(matcher.group(7)))),
-                    new Money(new BigDecimal(matcher.group(8)), matcher.group(9)),
-                    provider().name()));
+        JsonNode flights;
+        try {
+            flights = objectMapper.readTree(response);
+        } catch (JsonProcessingException exception) {
+            throw new ProviderRequestException("Mock-Alpha response could not be parsed");
+        }
+        if (flights == null || !flights.isArray()) {
+            throw new ProviderRequestException("Mock-Alpha response must be a JSON array");
+        }
+        List<FlightItinerary> itineraries = new ArrayList<>();
+        for (JsonNode flight : flights) {
+            try {
+                itineraries.add(parseItinerary(flight));
+            } catch (IllegalArgumentException | NullPointerException | DateTimeException exception) {
+                log.warn("Skipping invalid itinerary from Mock-Alpha: {}", exception.getMessage());
+            }
         }
         return itineraries;
     }
 
+    private FlightItinerary parseItinerary(JsonNode flight) {
+        JsonNode segments = flight.get("segments");
+        List<FlightSegment> parsedSegments;
+        if (segments == null) {
+            parsedSegments = List.of(parseSegment(flight));
+        } else {
+            if (!segments.isArray() || segments.isEmpty()) {
+                throw new IllegalArgumentException("An itinerary must contain at least one segment");
+            }
+            parsedSegments = new ArrayList<>();
+            for (JsonNode segment : segments) {
+                parsedSegments.add(parseSegment(segment));
+            }
+        }
+        return new FlightItinerary(
+                parsedSegments,
+                new Money(decimal(flight, "price"), text(flight, "currency")),
+                provider().name()
+        );
+    }
+
+    private static FlightSegment parseSegment(JsonNode segment) {
+        return new FlightSegment(
+                new Carrier(text(segment, "carrier"), text(segment, "carrierName")),
+                text(segment, "flightNumber"),
+                text(segment, "origin"),
+                text(segment, "destination"),
+                OffsetDateTime.parse(text(segment, "departure")),
+                OffsetDateTime.parse(text(segment, "arrival"))
+        );
+    }
+
+    private static String text(JsonNode object, String field) {
+        JsonNode value = object.get(field);
+        if (value == null || value.isNull() || value.asText().isBlank()) {
+            throw new IllegalArgumentException("Missing " + field);
+        }
+        return value.asText();
+    }
+
+    private static BigDecimal decimal(JsonNode object, String field) {
+        return new BigDecimal(text(object, field));
+    }
 }

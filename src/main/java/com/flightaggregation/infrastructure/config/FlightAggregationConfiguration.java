@@ -1,9 +1,9 @@
 package com.flightaggregation.infrastructure.config;
 
-import com.flightaggregation.application.usecase.FlightSearchResult;
-import com.flightaggregation.application.usecase.SearchFlightPageUseCase;
+import com.flightaggregation.application.dto.FlightSearchResult;
+import com.flightaggregation.application.usecase.SearchPagedFlightsUseCase;
 import com.flightaggregation.application.usecase.SearchFlightsUseCase;
-import com.flightaggregation.application.port.in.SearchFlightPage;
+import com.flightaggregation.application.port.in.SearchPagedFlights;
 import com.flightaggregation.application.port.in.SearchFlights;
 import com.flightaggregation.application.port.out.FlightSearchProvider;
 import com.flightaggregation.application.port.out.FlightSearchResultStore;
@@ -68,11 +68,12 @@ public class FlightAggregationConfiguration {
     public SearchFlightsUseCase searchFlightsUseCase(
             List<FlightSearchProvider> flightProviders,
             ExecutorService flightProviderExecutor,
-            MarkupPolicy markupPolicy
+            MarkupPolicy markupPolicy,
+            @Value("${flight.providers.timeout:PT3S}") Duration providerTimeout
     ) {
         return new SearchFlightsUseCase(
                 flightProviders,
-                Duration.ofSeconds(3),
+                providerTimeout,
                 flightProviderExecutor,
                 markupPolicy
         );
@@ -91,11 +92,11 @@ public class FlightAggregationConfiguration {
     }
 
     @Bean
-    public SearchFlightPage searchFlightPage(
+    public SearchPagedFlights searchPagedFlights(
             SearchFlights searchFlights,
             FlightSearchResultStore resultStore
     ) {
-        return new SearchFlightPageUseCase(searchFlights, resultStore);
+        return new SearchPagedFlightsUseCase(searchFlights, resultStore);
     }
 
     @Bean

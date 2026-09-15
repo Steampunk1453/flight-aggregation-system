@@ -1,4 +1,4 @@
-package com.flightaggregation.application.usecase;
+package com.flightaggregation.application.dto;
 
 import java.time.LocalDate;
 import java.io.Serializable;

@@ -1,6 +1,6 @@
 package com.flightaggregation.infrastructure.web;
 
-import com.flightaggregation.application.usecase.FlightSearchPageRequest;
+import com.flightaggregation.application.dto.FlightSearchPageRequest;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;

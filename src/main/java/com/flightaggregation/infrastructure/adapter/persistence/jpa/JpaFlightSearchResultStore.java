@@ -1,10 +1,10 @@
 package com.flightaggregation.infrastructure.adapter.persistence.jpa;
 
 import com.flightaggregation.application.port.out.FlightSearchResultStore;
-import com.flightaggregation.application.usecase.FlightSearchCriteria;
-import com.flightaggregation.application.usecase.FlightSearchPage;
-import com.flightaggregation.application.usecase.FlightSearchPageRequest;
-import com.flightaggregation.application.usecase.SearchFlight;
+import com.flightaggregation.application.dto.FlightSearchCriteria;
+import com.flightaggregation.application.dto.FlightSearchPage;
+import com.flightaggregation.application.dto.FlightSearchPageRequest;
+import com.flightaggregation.application.dto.FlightOffer;
 import org.springframework.data.domain.PageRequest;
 
 import java.time.ZoneOffset;
@@ -20,7 +20,7 @@ public final class JpaFlightSearchResultStore implements FlightSearchResultStore
     }
 
     @Override
-    public void upsertAll(List<SearchFlight> flights) {
+    public void upsertAll(List<FlightOffer> flights) {
         repository.saveAll(flights.stream().map(MaterializedFlightEntity::from).toList());
     }
 
