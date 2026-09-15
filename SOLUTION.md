@@ -203,9 +203,13 @@ The test suite covers:
 - Per-provider timeouts.
 - Supplier price versus selling price.
 - `maxPrice` filtering on the selling price and carrier filtering.
+- Combined price/carrier filtering and the all-provider-failure response.
 - MVC query-parameter and cursor handling.
 - Redis caching and PostgreSQL keyset pagination against real containers through
   Testcontainers.
+- End-to-end Spring MVC searches through HTTP providers, Redis, PostgreSQL,
+  deduplication, filters, partial failures, and cursor pagination.
+- A separately runnable 100,000–1,000,000-row PostgreSQL keyset-volume profile.
 
 ## REST API
 
@@ -325,13 +329,13 @@ The endpoint uses **keyset pagination**, ordered by:
 The cursor carries this three-part boundary, encoded at the web boundary. Keyset
 pagination avoids the progressively expensive scans associated with large SQL offsets
 and prevents duplicate/skipped results when new rows are materialized between requests.
-The read model uses two composite indexes. The default traversal index is
-`(origin, destination, departureAt, sellingAmount, id)`, matching the route/day filter
-and the keyset sort order. The carrier-filtered traversal index is
-`(origin, destination, carrierCode, departureAt, sellingAmount, id)`, so an equality
-filter on carrier still preserves the keyset order without a growing offset scan.
-Production workloads should evaluate additional partial or specialized indexes from
-observed filter selectivity.
+The read model uses `(origin, destination, departureAt, sellingAmount, id)`, matching
+the route/day filter and the keyset sort order. Carrier filtering is implemented as an
+`EXISTS` condition over persisted segments, so it matches any leg of a connecting
+itinerary; `materialized_flight_segments` has a `(carrierCode, flight_id)` index to
+support that lookup. This avoids the incorrect shortcut of indexing only the first
+carrier in an itinerary. Production workloads should evaluate additional partial or
+specialized indexes from observed filter selectivity.
 
 ## Docker development environment
 
@@ -638,12 +642,20 @@ and `redis`, each also `"UP"`; this gives a quick visual signal (without any too
 that the dependent containers are reachable before running the other use cases above.
 ## Scaling considerations
 
-The materialized read model, Redis result cache, concurrent provider calls, and
-keyset traversal are the foundation for the required daily inventory scale. The keyset
-indexes avoid offset growth and cache repeated live searches, but the target of
-100,000 to 1,000,000 daily combinations has not been benchmarked. A production
-deployment should add scheduled ingestion for high-demand routes, retention and archival
-rules for materialized offers, metrics/alerting, and load testing against the expected
+The materialized read model, Redis result cache, concurrent provider calls, JDBC insert
+batching, and keyset traversal are the foundation for the required daily inventory
+scale. The default suite stays fast, while the dedicated Testcontainers volume profile
+materializes and reads 100,000 offers through the real PostgreSQL adapter:
+
+```bash
+mvn -Pvolume-test test
+```
+
+The profile accepts `-Dflight.volume.rows=1000000` to exercise the upper inventory
+target. It verifies that the materialized store returns successive keyset pages without
+duplicates; it never uses a growing SQL offset. A production deployment should add
+scheduled ingestion for high-demand routes, retention and archival rules for
+materialized offers, metrics/alerting, and scheduled performance runs at the expected
 volume.
 
 ## Known limitations and production hardening backlog
@@ -677,24 +689,16 @@ required before running this system in production:
 - **Secrets management.** Database and cache credentials are defined directly in
   `compose.yaml` for local development convenience. Production should source them from
   a secrets manager or environment-specific vault, never from version control.
-- **Load testing.** No load test has been run against the materialized store or Redis
-  cache to validate behavior at the upper end of the required 1,000,000 daily
-  combinations; index and connection pool tuning should be validated under realistic
-  load before going live.
+- **Load-test environment tuning.** The `volume-test` profile provides a reproducible
+  100,000–1,000,000 row verification, but production database instance sizing,
+  connection-pool tuning, and traffic characteristics must still be measured in the
+  target deployment environment.
 
 ## AI tools used
 
 GitHub Copilot was used as an interactive coding assistant. No autonomous agent system
 or external code-generation service was used. The developer retained responsibility for
 the architecture, code review, and validation.
-
-Representative prompts used during implementation and review:
-
-- "puedes arreglar el test que falla?"
-- "usa Java 25 y revisa los tests que fallan"
-- "sería necesario crear un test para SearchFlightPageUseCase"
-- "los nombres te parecen correctos?"
-- "Revisa que el proyecto cumple con lo que nos piden"
 
 The assistant was used to discuss the Clean Architecture boundaries, propose the domain
 model and naming, implement and review provider adapters and tests, validate resiliency

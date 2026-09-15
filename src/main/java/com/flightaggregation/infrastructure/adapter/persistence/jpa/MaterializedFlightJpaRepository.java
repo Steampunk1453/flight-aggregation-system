@@ -18,7 +18,14 @@ public interface MaterializedFlightJpaRepository extends JpaRepository<Materiali
               and flight.departureAt >= :dayStart
               and flight.departureAt < :nextDayStart
               and (:filterByMaxPrice = false or flight.sellingAmount <= :maxPrice)
-              and (:filterByCarrier = false or flight.carrierCode = :carrier)
+              and (
+                  :filterByCarrier = false
+                  or exists (
+                      select 1 from MaterializedFlightEntity matchingFlight
+                      join matchingFlight.segments segment
+                      where matchingFlight = flight and segment.carrierCode = :carrier
+                  )
+              )
             order by flight.departureAt asc, flight.sellingAmount asc, flight.id asc
             """)
     List<MaterializedFlightEntity> findFirstPage(
@@ -40,7 +47,14 @@ public interface MaterializedFlightJpaRepository extends JpaRepository<Materiali
               and flight.departureAt >= :dayStart
               and flight.departureAt < :nextDayStart
               and (:filterByMaxPrice = false or flight.sellingAmount <= :maxPrice)
-              and (:filterByCarrier = false or flight.carrierCode = :carrier)
+              and (
+                  :filterByCarrier = false
+                  or exists (
+                      select 1 from MaterializedFlightEntity matchingFlight
+                      join matchingFlight.segments segment
+                      where matchingFlight = flight and segment.carrierCode = :carrier
+                  )
+              )
               and (
                   flight.departureAt > :cursorDeparture
                   or (flight.departureAt = :cursorDeparture and flight.sellingAmount > :cursorPrice)

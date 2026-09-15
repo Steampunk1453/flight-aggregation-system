@@ -157,6 +157,57 @@ class SearchFlightsUseCaseTest {
         }
     }
 
+    @Test
+    @DisplayName("Applies the maximum selling price and carrier filters together")
+    void combinesMaximumSellingPriceAndCarrierFilters() {
+        FlightSearchCriteria criteria = new FlightSearchCriteria(
+                "MAD",
+                "JFK",
+                LocalDate.of(2026, 10, 1),
+                new BigDecimal("110.00"),
+                "OA"
+        );
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            var useCase = new SearchFlightsUseCase(
+                    List.of(
+                            provider(Provider.ALPHA, "100.00", "OA", "OA101"),
+                            provider(Provider.BETA, "50.00", "AB", "AB201"),
+                            provider(Provider.GAMMA, "120.00", "OA", "OA102")
+                    ),
+                    Duration.ofSeconds(1),
+                    executor,
+                    MARKUP_POLICY
+            );
+
+            var result = useCase.search(criteria);
+
+            assertEquals(1, result.itineraries().size());
+            assertEquals("OA101", result.itineraries().getFirst().itinerary().segments().getFirst().flightNumber());
+        }
+    }
+
+    @Test
+    @DisplayName("Returns a controlled failure for every provider when none of them responds successfully")
+    void returnsFailuresWhenAllProvidersFail() {
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            var useCase = new SearchFlightsUseCase(
+                    List.of(
+                            provider(Provider.ALPHA, "100.00", Duration.ZERO, true),
+                            provider(Provider.BETA, "100.00", Duration.ZERO, true),
+                            provider(Provider.GAMMA, "100.00", Duration.ZERO, true)
+                    ),
+                    Duration.ofSeconds(1),
+                    executor,
+                    MARKUP_POLICY
+            );
+
+            var result = useCase.search(CRITERIA);
+
+            assertEquals(0, result.itineraries().size());
+            assertEquals(3, result.failures().size());
+        }
+    }
+
     private static FlightSearchProvider provider(
             Provider provider,
             String price,

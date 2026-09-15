@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class CachedSearchFlightsTest {
@@ -51,6 +52,26 @@ class CachedSearchFlightsTest {
         assertSame(liveResult, firstResult);
         assertSame(liveResult, secondResult);
         assertEquals(1, delegate.calls);
+    }
+
+    @Test
+    @DisplayName("Uses normalized criteria and all filters as the Redis cache key")
+    void usesTheCompleteNormalizedCriteriaAsTheCacheKey() {
+        RedisTemplate<String, FlightSearchResult> redisTemplate = mock(RedisTemplate.class);
+        ValueOperations<String, FlightSearchResult> valueOperations = mock(ValueOperations.class);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        var cache = new RedisFlightSearchCache(redisTemplate, CACHE_TTL);
+        FlightSearchCriteria criteria = new FlightSearchCriteria(
+                " mad ",
+                " jfk ",
+                LocalDate.of(2026, 10, 1),
+                new java.math.BigDecimal("200.00"),
+                " oa "
+        );
+
+        cache.find(criteria);
+
+        verify(valueOperations).get("flight-search:MAD:JFK:2026-10-01:200:OA");
     }
 
     private static final class CountingSearchFlights implements SearchFlights {

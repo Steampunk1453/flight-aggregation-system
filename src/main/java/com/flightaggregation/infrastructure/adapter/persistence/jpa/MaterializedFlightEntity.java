@@ -29,10 +29,6 @@ import java.util.UUID;
                 @Index(
                         name = "idx_materialized_flights_keyset",
                         columnList = "origin, destination, departureAt, sellingAmount, id"
-                ),
-                @Index(
-                        name = "idx_materialized_flights_carrier_keyset",
-                        columnList = "origin, destination, carrierCode, departureAt, sellingAmount, id"
                 )
         }
 )
@@ -73,7 +69,14 @@ public class MaterializedFlightEntity {
     private String sellingCurrency;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "materialized_flight_segments", joinColumns = @JoinColumn(name = "flight_id"))
+    @CollectionTable(
+            name = "materialized_flight_segments",
+            joinColumns = @JoinColumn(name = "flight_id"),
+            indexes = @Index(
+                    name = "idx_materialized_flight_segments_carrier",
+                    columnList = "carrierCode, flight_id"
+            )
+    )
     @OrderColumn(name = "segment_position")
     private List<MaterializedFlightSegment> segments;
 
