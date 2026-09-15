@@ -6,12 +6,13 @@ import com.flightaggregation.application.dto.FlightSearchPage;
 import com.flightaggregation.application.dto.FlightSearchPageRequest;
 import com.flightaggregation.application.dto.FlightOffer;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneOffset;
 import java.math.BigDecimal;
 import java.util.List;
 
-public final class JpaFlightSearchResultStore implements FlightSearchResultStore {
+public class JpaFlightSearchResultStore implements FlightSearchResultStore {
 
     private final MaterializedFlightJpaRepository repository;
 
@@ -20,11 +21,13 @@ public final class JpaFlightSearchResultStore implements FlightSearchResultStore
     }
 
     @Override
+    @Transactional
     public void upsertAll(List<FlightOffer> flights) {
         repository.saveAll(flights.stream().map(MaterializedFlightEntity::from).toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public FlightSearchPage findPage(
             FlightSearchCriteria criteria,
             FlightSearchPageRequest pageRequest
