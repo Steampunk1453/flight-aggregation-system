@@ -1,5 +1,6 @@
 package com.flightaggregation.application.dto;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -12,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class FlightSearchCriteriaTest {
 
     @Test
+    @DisplayName("Normalizes origin, destination, and carrier filters to uppercase airport and airline codes")
     void normalizesAirportAndCarrierCodes() {
         FlightSearchCriteria criteria = new FlightSearchCriteria(
                 " mad ",
@@ -27,6 +29,7 @@ class FlightSearchCriteriaTest {
     }
 
     @Test
+    @DisplayName("Treats a blank carrier filter as an absent carrier restriction")
     void normalizesBlankCarrierToNoCarrierFilter() {
         FlightSearchCriteria criteria = new FlightSearchCriteria(
                 "MAD",
@@ -40,6 +43,7 @@ class FlightSearchCriteriaTest {
     }
 
     @Test
+    @DisplayName("Rejects invalid criteria such as short airport codes, identical routes, and negative price filters")
     void rejectsInvalidSearchCriteria() {
         assertThrows(
                 IllegalArgumentException.class,

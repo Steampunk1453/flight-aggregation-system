@@ -40,7 +40,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Testcontainers(disabledWithoutDocker = true)
-class FlightSearchControllerIntegrationTest {
+class FlightSearchControllerIT {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final ProviderServer providerServer = ProviderServer.start();

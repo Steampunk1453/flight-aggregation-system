@@ -1,4 +1,4 @@
-package com.flightaggregation.infrastructure;
+package com.flightaggregation.infrastructure.persistence;
 
 import com.flightaggregation.application.dto.FlightOffer;
 import com.flightaggregation.application.dto.FlightSearchCriteria;
@@ -8,6 +8,7 @@ import com.flightaggregation.domain.model.Carrier;
 import com.flightaggregation.domain.model.FlightItinerary;
 import com.flightaggregation.domain.model.FlightSegment;
 import com.flightaggregation.domain.model.Money;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +59,7 @@ class FlightSearchVolumeIT {
     }
 
     @Test
+    @DisplayName("Persists the configured offer volume and walks consecutive keyset pages without repeating itineraries")
     void materializesAndTraversesTheConfiguredInventoryVolumeWithKeysetPagination() {
         int rowCount = Integer.getInteger("flight.volume.rows", DEFAULT_ROW_COUNT);
         assertTrue(rowCount >= DEFAULT_ROW_COUNT, "The volume profile must exercise at least 100,000 offers");

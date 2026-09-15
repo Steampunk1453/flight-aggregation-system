@@ -1,4 +1,4 @@
-package com.flightaggregation.infrastructure;
+package com.flightaggregation.infrastructure.persistence;
 
 import com.flightaggregation.application.port.out.FlightSearchResultStore;
 import com.flightaggregation.application.dto.FlightSearchCriteria;
@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @Testcontainers(disabledWithoutDocker = true)
-class PersistenceIntegrationTest {
+class FlightSearchResultStorageIT {
 
     @Container
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:17-alpine")
