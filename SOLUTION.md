@@ -1,11 +1,12 @@
 # Flight Aggregation & Cache Optimization System
 
-## 1. Reviewer quick start
+## 1. Quick start
 
 ### Prerequisites
 
 - Java 25
 - Docker Desktop with Docker Compose
+- Maven is provided by the included Maven Wrapper.
 
 ### Run the complete stack
 
@@ -13,14 +14,19 @@
 docker compose up --build
 ```
 
+```bash
+# Stop the stack and remove database/cache volumes
+docker compose down -v
+```
+
 | Service | Address |
 |---|---|
 | Application and frontend | http://localhost:8080 |
 | Swagger UI | http://localhost:8080/swagger-ui/index.html |
 | Health endpoint | http://localhost:8080/actuator/health |
-| Mock Alpha | http://localhost:8081 |
-| Mock Beta | http://localhost:8082 |
-| Mock Gamma | http://localhost:8083 |
+| Mock Alpha | http://localhost:8081/__admin |
+| Mock Beta | http://localhost:8082/__admin |
+| Mock Gamma | http://localhost:8083/__admin |
 
 Open `http://localhost:8080/`, search `MAD` to `JFK` for `2026-10-01`, and use
 `pageSize=2` to exercise cursor pagination. If the backend is already running locally,
@@ -30,17 +36,21 @@ stop it before starting the complete Docker stack because both use port `8080`.
 
 ```bash
 # Unit and integration tests
-mvn test
+./mvnw test
 
 # Dedicated PostgreSQL volume test: 100,000 offers by default
-mvn -Pvolume-test test
+./mvnw -Pvolume-test test
 
-# Upper target of 1,000,000 offers
-mvn -Pvolume-test -Dflight.volume.rows=1000000 test
+# **Extreme volume test (materializes 1,000,000 offers and tests keyset traversal)**
+./mvnw -Pvolume-test -Dflight.volume.rows=1000000 test
+
+# Generate the JaCoCo HTML coverage report at target/site/jacoco/index.html
+./mvnw verify
 ```
 
 The volume profile is intentionally excluded from the standard suite. It needs Docker
-storage sized for the selected inventory volume.
+storage sized for the selected inventory volume. On Windows, replace `./mvnw` with
+`mvnw.cmd`.
 
 ## 2. Requirement coverage
 
@@ -168,6 +178,9 @@ GET /api/flights/search?origin=MAD&destination=JFK&departureDate=2026-10-01&maxP
 
 The response contains `flights`, `providerFailures`, and `nextCursor`. Invalid criteria
 or cursors return `400 Bad Request`; unexpected errors return a generic `500` response.
+All HTTP errors use the same JSON structure: `timestamp`, `status`, `code`, `message`,
+and `path`. Provider failures remain part of a successful partial-search response rather
+than HTTP errors.
 
 The frontend at `/` provides the same filters, client-side validation, partial-result
 warnings, and a **Next page** button that appends the next cursor page.
@@ -176,9 +189,25 @@ warnings, and a **Next page** button that appends the next cursor page.
 
 The solution is designed for 100,000 to 1,000,000 daily combinations through:
 
+### Database choice: PostgreSQL (SQL)
+
+Although large OTAs often use NoSQL key-value stores such as Redis or Couchbase as
+read-through caches for extreme read loads, PostgreSQL is the primary read model for
+this aggregator. Modern SQL engines handle the stated one-million-combination inventory
+profile, while PostgreSQL B-tree indexes fit the required multi-parameter filtering by
+origin, destination, carrier, and maximum price. They also support the ordered seeks
+needed for efficient keyset pagination.
+
+Redis remains the short-lived aggregate-result cache. A document or key-value store as
+the primary query store would make price range filters and cursor-based ordering more
+complex than the indexed relational model.
+
 - **Materialized PostgreSQL read model.** Repeated searches refresh deterministic
   itinerary rows instead of adding duplicates.
 - **JDBC batching.** Hibernate batches inserts and updates in groups of 100.
+- **Explicit transaction boundaries.** Materialization uses a write transaction, while
+  keyset reads use `@Transactional(readOnly = true)` to make their read-only intent
+  explicit and avoid unnecessary persistence-context flushing.
 - **Redis cache.** A five-minute cache stores live aggregate results. Its key includes
   normalized origin, destination, date, maximum price, and carrier.
 - **Keyset pagination.** Queries request `pageSize + 1` rows, ordered by
@@ -240,12 +269,14 @@ GitHub Copilot was used as an interactive coding assistant. No autonomous agent 
 or external code-generation service was used. Architectural and implementation decisions
 remained under developer review.
 
-Representative prompts:
+To illustrate the collaboration model, these are representative prompts used during
+development:
 
-- "puedes arreglar el test que falla?"
-- "usa Java 25 y revisa los tests que fallan"
-- "Revisa que el proyecto cumple con lo que nos piden"
-- "haz todos los cambios que propones y también prepara el proyecto para la entrega"
-
-The assistant was used to discuss architecture, model and contract names, provider
-adapters, resiliency, pagination, tests, documentation, and delivery review.
+- **Architecture & trade-offs:** *"I need to handle GDS mock providers that have up
+  to 5s latency, but I want to keep the search fast. What are the trade offs of
+  implementing a strict 3 second timeout and returning partial results?"*
+- **Data Aggregation**: *"How can I group a list of flights by a custom string key, resolve duplicates by keeping the
+   one with the lowest price, and then map the resulting map's values to a new list?"*
+- **Database optimization:** *"Explain the exact mechanism of Keyset Pagination
+  (cursor-based) in PostgreSQL compared to standard OFFSET. How should I encode the
+  cursor for a search result ordered by price and departure time?"*
