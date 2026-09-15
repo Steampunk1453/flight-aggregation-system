@@ -1,0 +1,95 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: flight_aggregation
+      POSTGRES_USER: flight_aggregation
+      POSTGRES_PASSWORD: flight_aggregation
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flight_aggregation -d flight_aggregation"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7.4-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mock-alpha:
+    image: wiremock/wiremock:3.13.1
+    command: ["--global-response-templating"]
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./docker/wiremock/alpha:/home/wiremock/mappings:ro
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/__admin/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mock-beta:
+    image: wiremock/wiremock:3.13.1
+    command: ["--global-response-templating"]
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./docker/wiremock/beta:/home/wiremock/mappings:ro
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/__admin/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mock-gamma:
+    image: wiremock/wiremock:3.13.1
+    command: ["--global-response-templating"]
+    ports:
+      - "8083:8080"
+    volumes:
+      - ./docker/wiremock/gamma:/home/wiremock/mappings:ro
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/__admin/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      FLIGHT_DATABASE_URL: jdbc:postgresql://postgres:5432/flight_aggregation
+      FLIGHT_DATABASE_USERNAME: flight_aggregation
+      FLIGHT_DATABASE_PASSWORD: flight_aggregation
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      FLIGHT_PROVIDER_ALPHA_URL: http://mock-alpha:8080/flights
+      FLIGHT_PROVIDER_BETA_URL: http://mock-beta:8080/flights
+      FLIGHT_PROVIDER_GAMMA_URL: http://mock-gamma:8080/flights
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mock-alpha:
+        condition: service_healthy
+      mock-beta:
+        condition: service_healthy
+      mock-gamma:
+        condition: service_healthy
+
+volumes:
+  postgres-data:

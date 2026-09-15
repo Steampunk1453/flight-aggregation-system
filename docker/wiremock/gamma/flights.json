@@ -1,0 +1,15 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/flights"
+  },
+  "response": {
+    "status": 200,
+    "fixedDelayMilliseconds": 1000,
+    "headers": {
+      "Content-Type": "text/plain"
+    },
+    "body": "OA,Omega Air,OA101,{{request.query.origin}},{{request.query.destination}},{{request.query.departureDate}}T10:00:00Z,{{request.query.departureDate}}T12:00:00Z,118.00,EUR\nEF,Echo Fly,EF404,{{request.query.origin}},{{request.query.destination}},{{request.query.departureDate}}T16:00:00Z,{{request.query.departureDate}}T19:30:00Z,142.50,EUR\nGI,Gamma Air,GI601,{{request.query.origin}},{{request.query.destination}},{{request.query.departureDate}}T04:30:00Z,{{request.query.departureDate}}T06:50:00Z,110.00,EUR\nHJ,Hydro Jet,HJ602,{{request.query.origin}},{{request.query.destination}},{{request.query.departureDate}}T09:30:00Z,{{request.query.departureDate}}T11:50:00Z,175.00,EUR\nIK,Ion Kite,IK603,{{request.query.origin}},{{request.query.destination}},{{request.query.departureDate}}T12:00:00Z,{{request.query.departureDate}}T14:20:00Z,145.00,EUR\nJL,Jet Line,JL604,{{request.query.origin}},{{request.query.destination}},{{request.query.departureDate}}T14:30:00Z,{{request.query.departureDate}}T16:50:00Z,190.00,EUR\nKM,Kilo Metro,KM605,{{request.query.origin}},{{request.query.destination}},{{request.query.departureDate}}T16:30:00Z,{{request.query.departureDate}}T18:50:00Z,120.00,EUR\nLN,Luna Nova,LN606,{{request.query.origin}},{{request.query.destination}},{{request.query.departureDate}}T23:00:00Z,{{request.query.departureDate}}T23:55:00Z,275.00,EUR",
+    "transformers": ["response-template"]
+  }
+}

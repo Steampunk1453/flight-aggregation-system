@@ -1,0 +1,61 @@
+flight:
+  pricing:
+    markup-percentage: 5
+  providers:
+    alpha:
+      url: ${FLIGHT_PROVIDER_ALPHA_URL:http://localhost:8081/flights}
+    beta:
+      url: ${FLIGHT_PROVIDER_BETA_URL:http://localhost:8082/flights}
+    gamma:
+      url: ${FLIGHT_PROVIDER_GAMMA_URL:http://localhost:8083/flights}
+    timeout: ${FLIGHT_PROVIDERS_TIMEOUT:PT3S}
+  search:
+    cache:
+      enabled: true
+      ttl: PT5M
+
+spring:
+  application:
+    name: flight-aggregation-system
+  datasource:
+    url: ${FLIGHT_DATABASE_URL:jdbc:postgresql://localhost:5432/flight_aggregation}
+    username: ${FLIGHT_DATABASE_USERNAME:flight_aggregation}
+    password: ${FLIGHT_DATABASE_PASSWORD:flight_aggregation}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 100
+        order_inserts: true
+        order_updates: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+  health:
+    redis:
+      enabled: true
+    db:
+      enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+logging:
+  level:
+    root: INFO
+    com.flightaggregation: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"

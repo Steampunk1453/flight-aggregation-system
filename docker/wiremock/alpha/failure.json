@@ -1,0 +1,21 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "GET",
+    "urlPath": "/flights",
+    "queryParameters": {
+      "origin": {
+        "equalTo": "ERR"
+      }
+    }
+  },
+  "response": {
+    "status": 500,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "message": "Controlled Mock-Alpha provider failure"
+    }
+  }
+}
